@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Stock Screener & Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">📊 <span>Vanguard</span></div>
+        <ul class="nav-links">
+            <li class="active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</li>
+            <li onclick="switchTab('screener')"><i class="fas fa-filter"></i> Screener</li>
+            <li onclick="switchTab('tracker')"><i class="fas fa-book"></i> Tracker</li>
+        </ul>
+    </nav>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i></div>
+        <div class="nav-item" onclick="switchTab('screener')"><i class="fas fa-filter"></i></div>
+        <div class="nav-item" onclick="switchTab('tracker')"><i class="fas fa-book"></i></div>
+    </nav>
+
+    <main class="main-content">
+        <div id="api-status" class="api-status">Connecting to Market Data...</div>
+
+        <header class="top-bar">
+            <div class="search-box">
+                <input type="text" id="ticker-input" placeholder="Ticker (e.g. BBCA, TSLA)..." value="BBCA">
+                <select id="timeframe-select">
+                    <option value="1d">1D</option>
+                    <option value="1h">1H</option>
+                    <option value="1w">1W</option>
+                </select>
+                <button onclick="analyzeStock()"><i class="fas fa-search"></i> Analyze</button>
+            </div>
+            <button class="share-btn" onclick="exportDashboard()"><i class="fas fa-share-nodes"></i> Export</button>
+        </header>
+
+        <div id="export-container">
+            <div id="tab-dashboard" class="tab-content active dashboard-grid">
+                <div class="card glass">
+                    <h3><span id="display-ticker">BBCA</span> Overview</h3>
+                    <div class="price-display">
+                        <h1 id="last-price">Rp 0</h1>
+                        <span id="price-change" class="badge">0%</span>
+                    </div>
+                    <div class="grid-2">
+                        <div>Market: <span id="market-cond" class="neon-text">Loading...</span></div>
+                        <div>Volume: <span id="vol-realtime">0</span></div>
+                        <div>Fair Value: <span id="fair-value">0</span></div>
+                        <div>Zone: <span id="price-zone">Loading...</span></div>
+                    </div>
+                </div>
+
+                <div class="card glass">
+                    <h3>📍 Technical Status</h3>
+                    <ul class="data-list">
+                        <li>Support: <span id="support-lvl">0</span></li>
+                        <li>Resistance: <span id="resist-lvl">0</span></li>
+                        <li>Breakout Prob: <span id="breakout-prob">0%</span></li>
+                        <li>Momentum: <span id="momentum-str">Neutral</span></li>
+                    </ul>
+                    <hr class="divider">
+                    <h3>⚡ Gap Analysis</h3>
+                    <div id="gap-status">No Gap Detected</div>
+                </div>
+
+                <div class="card glass">
+                    <h3>📈 Entry Plan Engine</h3>
+                    <div class="plan-box">
+                        <div class="plan-item"><span>Entry Zone:</span> <b id="entry-zone">-</b></div>
+                        <div class="plan-item text-red"><span>Stop Loss:</span> <b id="stop-loss">-</b></div>
+                        <div class="plan-item text-green"><span>Take Profit:</span> <b id="take-profit">-</b></div>
+                        <div class="plan-item"><span>R/R Ratio:</span> <b id="rr-ratio">-</b></div>
+                    </div>
+                </div>
+
+                <div class="card glass">
+                    <h3>🧠 Smart Money Flow</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="sm-flow-bar" style="width: 50%;"></div>
+                    </div>
+                    <div class="flex-between mt-1">
+                        <span class="text-green">Buyer: <span id="buyer-pct">50%</span></span>
+                        <span class="text-red">Seller: <span id="seller-pct">50%</span></span>
+                    </div>
+                    <div class="mt-1">Status: <strong id="sm-status">Neutral</strong></div>
+                </div>
+
+                <div class="card glass span-full">
+                    <h3>💡 AI Insight Engine</h3>
+                    <p id="ai-insight" class="insight-text">Menunggu analisis...</p>
+                </div>
+
+                <div class="card glass span-full">
+                    <h3>📰 News Sentiment</h3>
+                    <div class="sentiment-score">Sentiment Score: <span id="sentiment-score" class="badge">0</span></div>
+                    <ul id="news-list" class="news-list">
+                        </ul>
+                </div>
+            </div>
+
+            <div id="tab-screener" class="tab-content hidden">
+                <div class="card glass">
+                    <div class="flex-between">
+                        <h3>📌 Strategy Screener</h3>
+                        <select id="strategy-select" onchange="runScreener()">
+                            <option value="ara">ARA Hunter</option>
+                            <option value="swing">Swing Trade</option>
+                            <option value="scalp">Scalping Mode</option>
+                            <option value="dividend">Dividend Screener (Yield > 5%)</option>
+                        </select>
+                    </div>
+                    <div class="table-responsive mt-2">
+                        <table id="screener-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticker</th>
+                                    <th>Score</th>
+                                    <th>Chg %</th>
+                                    <th>Signal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-tracker" class="tab-content hidden">
+                <div class="dashboard-grid">
+                    <div class="card glass">
+                        <h3>Performance Summary</h3>
+                        <div class="grid-2 mt-1">
+                            <div>Win Rate: <b id="win-rate">0%</b></div>
+                            <div>Total P/L: <b id="total-pl">Rp 0</b></div>
+                        </div>
+                    </div>
+                    <div class="card glass">
+                        <h3>Add Trade</h3>
+                        <div class="form-group">
+                            <input type="text" id="trade-ticker" placeholder="Ticker">
+                            <input type="number" id="trade-entry" placeholder="Entry Price">
+                            <input type="number" id="trade-exit" placeholder="Exit Price">
+                            <button onclick="addTrade()" class="btn-primary">Save Trade</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card glass mt-2">
+                    <h3>Trade History</h3>
+                    <div class="table-responsive">
+                        <table id="tracker-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticker</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>P/L %</th>
+                                    <th>Act</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
